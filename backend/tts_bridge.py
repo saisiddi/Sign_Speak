@@ -26,23 +26,34 @@ class TTSBridge:
     def speak_now(self, text: str):
         self.speak(text)
 
+    def _say(self, text: str):
+        text = text.strip().replace('"', '').replace("'", '')
+        # Try Stereo Mix first for Google Meet routing
+        # Falls back to default speakers if Stereo Mix not available
+        cmd = (
+            f'Add-Type -AssemblyName System.Speech;'
+            f'$s = New-Object System.Speech.Synthesis.SpeechSynthesizer;'
+            f'$s.Rate = {SAPI_RATE};'
+            f'$s.Volume = {SAPI_VOLUME};'
+            f'try {{'
+            f'  $s.SelectAudioDestination("CABLE Input (VB-Audio Virtual Cable)");'
+            f'}} catch {{'
+            f'  Write-Host "Stereo Mix not available, using default";'
+            f'}};'
+            f'$s.Speak("{text}");'
+        )
+        subprocess.run(
+            ['powershell', '-NonInteractive', '-Command', cmd],
+            timeout=10,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
     def _worker_loop(self):
         while True:
             text = self._queue.get()
             try:
-                cmd = (
-                    f'Add-Type -AssemblyName System.Speech;'
-                    f'$s=New-Object System.Speech.Synthesis.SpeechSynthesizer;'
-                    f'$s.Rate={SAPI_RATE};'
-                    f'$s.Volume={SAPI_VOLUME};'
-                    f'$s.Speak("{text}");'
-                )
-                subprocess.run(
-                    ['powershell', '-NonInteractive', '-Command', cmd],
-                    timeout=10,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+                self._say(text)
             except Exception as e:
                 print(f"[TTS] Error: {e}")
             self._queue.task_done()
