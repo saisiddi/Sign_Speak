@@ -35,3 +35,10 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# SignSpeak runtime files
+backend/snippets.json
+backend/__pycache__/
+backend/model/
+*.pyc
+.env
