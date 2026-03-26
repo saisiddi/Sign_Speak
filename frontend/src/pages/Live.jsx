@@ -6,13 +6,13 @@ import GestureRef from '../components/GestureRef';
 import { useOutletContext } from 'react-router-dom';
 
 export default function Live() {
-  const { currentSign, transcript, lastSpoken, eventLog, speak, clearTranscript } = useOutletContext();
+  const { currentSign, displayText, transcript, lastSpoken, eventLog, speak, clearTranscript } = useOutletContext();
 
   return (
     <div className="layout-grid">
       <div className="camera-section">
         <VideoFeed currentSign={currentSign} />
-        <SignDisplay lastSpoken={lastSpoken} />
+        <SignDisplay displayText={displayText} lastSpoken={lastSpoken} />
       </div>
       <div className="controls-section">
         <Transcript transcript={transcript} onSpeak={speak} onClear={clearTranscript} />

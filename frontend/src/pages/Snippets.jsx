@@ -51,19 +51,30 @@ export default function Snippets() {
   const [customGesture, setCustomGesture] = useState('Open_Palm');
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('signspeask_snippets');
-      if (stored) {
-        setAssignments(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    // Load from backend and sync to localStorage on mount
+    fetch('http://localhost:8001/snippets')
+      .then(r => r.json())
+      .then(data => {
+        localStorage.setItem('signspeask_snippets', JSON.stringify(data));
+        setAssignments(data);
+      })
+      .catch(() => {
+        // Fall back to localStorage if backend not available
+        const saved = localStorage.getItem('signspeask_snippets');
+        if (saved) setAssignments(JSON.parse(saved));
+      });
   }, []);
 
   const handleAssign = (gestureId, phrase) => {
-    const newAssignments = { ...assignments, [gestureId]: phrase };
-    setAssignments(newAssignments);
+    const updatedAssignments = { ...assignments, [gestureId]: phrase };
+    setAssignments(updatedAssignments);
+    localStorage.setItem('signspeask_snippets', JSON.stringify(updatedAssignments));
+    // After saving to localStorage, also sync to backend
+    fetch('http://localhost:8001/snippets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ snippets: updatedAssignments })
+    }).catch(err => console.log('Backend sync:', err));
   };
 
   const handleSave = () => {

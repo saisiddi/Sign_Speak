@@ -19,6 +19,7 @@ import time
 import threading
 import sys
 import os
+from snippets import get_phrase
 import numpy as np
 
 HAND_CONNECTIONS = HandLandmarksConnections.HAND_CONNECTIONS
@@ -172,16 +173,18 @@ class SignDetector:
                 return
         self._last_spoken    = sign
         self._cooldown_until = now + 3.0
-        self.text_buffer     = sign
+        self.text_buffer     = get_phrase(sign)
         self.sign_hold_count = 0
         self.current_sign    = None
         self.confirmed_sign  = None
         if self.on_speak_trigger:
-            self.on_speak_trigger(sign)
+            # Look up custom snippet phrase for this gesture
+            phrase = get_phrase(sign)
+            self.on_speak_trigger(phrase)
         if self.on_sign_confirmed:
             self.on_sign_confirmed(sign)
         if self.on_text_updated:
-            self.on_text_updated(sign)
+            self.on_text_updated(self.text_buffer)
 
     def _check_word_pause(self):
         pass

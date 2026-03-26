@@ -6,6 +6,7 @@ export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const [ttsBackend, setTtsBackend] = useState('');
   const [currentSign, setCurrentSign] = useState(null);
+  const [displayText, setDisplayText] = useState('');
   const [transcript, setTranscript] = useState('');
   const [lastSpoken, setLastSpoken] = useState('');
   const [eventLog, setEventLog] = useState([]);
@@ -55,9 +56,11 @@ export function useWebSocket() {
               sign: data.sign,
               confidence: data.confidence || 0,
             });
+            setDisplayText(data.text || data.sign || '');
             break;
           case 'text':
             setTranscript(data.text);
+            setDisplayText(data.text || '');
             break;
           case 'speak':
             setLastSpoken(data.word);
@@ -108,6 +111,7 @@ export function useWebSocket() {
     isConnected,
     ttsBackend,
     currentSign,
+    displayText,
     transcript,
     lastSpoken,
     eventLog,

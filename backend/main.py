@@ -30,6 +30,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from detector import SignDetector
+from snippets import load_snippets, save_snippets, get_phrase, reset_to_defaults, DEFAULT_SNIPPETS
 from tts_bridge import TTSBridge
 
 
@@ -205,3 +206,36 @@ async def reset():
     detector.reset_buffer()
     _broadcast({"type": "text", "text": ""})
     return {"status": "reset"}
+
+
+from pydantic import BaseModel as PydanticBase
+
+
+class SnippetsUpdate(PydanticBase):
+    snippets: dict
+
+
+@app.get("/snippets")
+async def get_snippets():
+    """Get all current snippet assignments."""
+    return load_snippets()
+
+
+@app.post("/snippets")
+async def update_snippets(req: SnippetsUpdate):
+    """Save snippet assignments from frontend."""
+    success = save_snippets(req.snippets)
+    return {"status": "ok" if success else "error", "snippets": req.snippets}
+
+
+@app.post("/snippets/reset")
+async def reset_snippets():
+    """Reset all snippets to defaults."""
+    reset_to_defaults()
+    return {"status": "reset", "snippets": DEFAULT_SNIPPETS}
+
+
+@app.get("/snippets/defaults")
+async def get_defaults():
+    """Get the default snippet assignments."""
+    return DEFAULT_SNIPPETS
