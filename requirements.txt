@@ -1,0 +1,13 @@
+﻿mediapipe==0.10.14
+opencv-python==4.10.0.84
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+websockets==13.1
+numpy==1.26.4
+Pillow==10.4.0
+python-multipart==0.0.9
+requests==2.32.3
+sounddevice==0.4.7
+soundfile==0.12.1
+pyttsx3==2.90
+pydub==0.25.1
