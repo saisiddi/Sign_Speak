@@ -66,6 +66,9 @@ export function useWebSocket() {
             setLastSpoken(data.word);
             addLog(`SPOKE: ${data.word}`, 'important');
             break;
+          case 'ping':
+          case 'mode':
+            break;
           default:
             addLog(`Unknown event: ${data.type}`);
         }

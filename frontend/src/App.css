@@ -294,3 +294,29 @@
 .settings-control {
   width: 200px;
 }
+/* Mode switcher (Gestures / ASL Spell / Both) */
+.mode-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid #1a1a1a;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.mode-btn:hover {
+  background: rgba(26, 26, 26, 0.08);
+}
+.mode-btn-active {
+  background: #1a1a1a;
+  color: #f5f2e9;
+}

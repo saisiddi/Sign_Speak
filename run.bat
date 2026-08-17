@@ -26,30 +26,51 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Activate venv
-echo  [1/5] Activating virtual environment...
-call venv\Scripts\activate
-if %errorlevel% neq 0 (
-    echo  [ERROR] venv not found. Creating new venv...
+:: Check venv (use its python.exe directly — no activate needed)
+echo  [1/6] Checking virtual environment...
+if not exist "venv\Scripts\python.exe" (
+    echo  venv not found. Creating new venv...
     python -m venv venv
-    call venv\Scripts\activate
+)
+set PY=venv\Scripts\python.exe
+
+:: Check Python dependencies — only install if imports actually fail
+echo  [2/6] Checking Python dependencies...
+%PY% -c "import mediapipe, cv2, fastapi, uvicorn, websockets, numpy, PIL, requests, sounddevice, soundfile, winsound" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo  Installing missing Python packages...
+    %PY% -m pip install -r requirements.txt -q --exists-action i
+) else (
+    echo  Python packages found.
 )
 
-:: Install Python dependencies
-echo  [2/5] Checking Python dependencies...
-pip install -r requirements.txt -q --exists-action i
+:: Download Piper TTS if missing
+echo  [3/6] Checking Piper TTS...
+if not exist "piper\piper.exe" (
+    echo  Piper not found. Downloading...
+    %PY% -c "import urllib.request,os,zipfile,shutil,glob; os.makedirs('piper',exist_ok=True); urllib.request.urlretrieve('https://github.com/rhasspy/piper/releases/download/2023.11.14-2/piper_windows_amd64.zip','piper/piper.zip'); z=zipfile.ZipFile('piper/piper.zip'); z.extractall('piper/x'); [shutil.move(f,'piper/'+os.path.basename(f)) for f in glob.glob('piper/x/*')]; z.close(); shutil.rmtree('piper/x'); os.remove('piper/piper.zip'); print('Piper ready')"
+) else (
+    echo  Piper found.
+)
+
+if not exist "piper\en_US-lessac-high.onnx" (
+    echo  Piper voice model not found. Downloading...
+    %PY% -c "import urllib.request,os; base='https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/high/'; [urllib.request.urlretrieve(base+f,'piper/'+f) for f in ['en_US-lessac-high.onnx','en_US-lessac-high.onnx.json']]; print('Voice model ready')"
+) else (
+    echo  Piper voice model found.
+)
 
 :: Download ASL model if missing
-echo  [3/5] Checking ASL gesture model...
+echo  [4/6] Checking ASL gesture model...
 if not exist "backend\model\gesture_recognizer.task" (
     echo  Downloading gesture recognizer model...
-    python backend\download_model.py
+    %PY% backend\download_model.py
 ) else (
     echo  Model found.
 )
 
 :: Install frontend dependencies
-echo  [4/5] Checking frontend dependencies...
+echo  [5/6] Checking frontend dependencies...
 if not exist "frontend\node_modules" (
     echo  Installing frontend packages...
     cd frontend
@@ -60,11 +81,13 @@ if not exist "frontend\node_modules" (
     echo  Frontend packages found.
 )
 
-:: Start backend in new terminal window
-echo  [5/5] Starting SignSpeak services...
+:: Stop any leftover backend already listening on 8001, then start fresh
+echo  [6/6] Starting SignSpeak services...
 echo.
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr /r ":8001.*LISTENING"') do taskkill /PID %%p /F >nul 2>&1
+
 echo  Starting backend on http://localhost:8001 ...
-start "SignSpeak Backend" cmd /k "cd /d %~dp0 && call venv\Scripts\activate && cd backend && uvicorn main:app --host 0.0.0.0 --port 8001"
+start "SignSpeak Backend" cmd /k "cd /d %~dp0backend && ..\venv\Scripts\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8001"
 
 :: Wait for backend to start
 echo  Waiting for backend to initialize...

@@ -21,19 +21,32 @@ DEFAULT_SNIPPETS = {
 }
 
 
+# Cache so the detector overlay can call get_phrase() every frame (30/s)
+# without hitting the disk each time — reloads only when the file changes.
+_cache = {"mtime": None, "data": None}
+
+
 def load_snippets() -> dict:
     """Load snippets from file, fall back to defaults if missing."""
-    if os.path.exists(SNIPPETS_FILE):
+    try:
+        mtime = os.path.getmtime(SNIPPETS_FILE)
+    except OSError:
+        mtime = None
+    if mtime is None:
+        _cache["mtime"], _cache["data"] = None, None
+        return DEFAULT_SNIPPETS.copy()
+    if _cache["mtime"] != mtime or _cache["data"] is None:
         try:
             with open(SNIPPETS_FILE, "r") as f:
                 data = json.load(f)
                 # Merge with defaults so new gestures always have a phrase
                 merged = DEFAULT_SNIPPETS.copy()
                 merged.update(data)
-                return merged
+                _cache["mtime"], _cache["data"] = mtime, merged
         except Exception as e:
             print(f"[Snippets] Error loading: {e}")
-    return DEFAULT_SNIPPETS.copy()
+            return (_cache["data"] or DEFAULT_SNIPPETS).copy()
+    return _cache["data"].copy()
 
 
 def save_snippets(snippets: dict) -> bool:

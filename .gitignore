@@ -42,3 +42,10 @@ backend/__pycache__/
 backend/model/
 *.pyc
 .env
+
+# Piper TTS
+piper/*.onnx
+piper/*.onnx.json
+piper/piper.exe
+piper/test.wav
+piper/
